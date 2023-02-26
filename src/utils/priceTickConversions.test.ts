@@ -9,7 +9,7 @@ describe('priceTickConversions', () => {
   function token({
     sortOrder,
     decimals = 18,
-    chainId = 1
+    chainId = 30
   }: {
     sortOrder: number
     decimals?: number

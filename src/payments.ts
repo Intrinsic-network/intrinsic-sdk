@@ -1,6 +1,6 @@
 import JSBI from 'jsbi'
 import { Interface } from '@ethersproject/abi'
-import IPeripheryPaymentsWithFee from '@uniswap/v3-periphery/artifacts/contracts/interfaces/IPeripheryPaymentsWithFee.sol/IPeripheryPaymentsWithFee.json'
+import IPeripheryPaymentsWithFee from '@intrinsic-network/periphery/artifacts/contracts/interfaces/IPeripheryPaymentsWithFee.sol/IPeripheryPaymentsWithFee.json'
 import { Percent, Token, validateAndParseAddress } from '@uniswap/sdk-core'
 import { toHex } from './utils/calldata'
 
@@ -28,21 +28,21 @@ export abstract class Payments {
     return toHex(fee.multiply(10_000).quotient)
   }
 
-  public static encodeUnwrapWETH9(amountMinimum: JSBI, recipient: string, feeOptions?: FeeOptions): string {
+  public static encodeUnwrapWRBTC(amountMinimum: JSBI, recipient: string, feeOptions?: FeeOptions): string {
     recipient = validateAndParseAddress(recipient)
 
     if (!!feeOptions) {
       const feeBips = this.encodeFeeBips(feeOptions.fee)
       const feeRecipient: string = validateAndParseAddress(feeOptions.recipient)
 
-      return Payments.INTERFACE.encodeFunctionData('unwrapWETH9WithFee', [
+      return Payments.INTERFACE.encodeFunctionData('unwrapWRBTCWithFee', [
         toHex(amountMinimum),
         recipient,
         feeBips,
         feeRecipient
       ])
     } else {
-      return Payments.INTERFACE.encodeFunctionData('unwrapWETH9', [toHex(amountMinimum), recipient])
+      return Payments.INTERFACE.encodeFunctionData('unwrapWRBTC', [toHex(amountMinimum), recipient])
     }
   }
 
@@ -70,7 +70,7 @@ export abstract class Payments {
     }
   }
 
-  public static encodeRefundETH(): string {
-    return Payments.INTERFACE.encodeFunctionData('refundETH')
+  public static encodeRefundRBTC(): string {
+    return Payments.INTERFACE.encodeFunctionData('refundRBTC')
   }
 }

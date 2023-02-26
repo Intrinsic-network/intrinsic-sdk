@@ -2,7 +2,7 @@ import { Token } from '@uniswap/sdk-core'
 import JSBI from 'jsbi'
 import { AllowedPermitArguments, SelfPermit, StandardPermitArguments } from './selfPermit'
 
-const token = new Token(1, '0x0000000000000000000000000000000000000001', 18, 't0', 'token0')
+const token = new Token(30, '0x0000000000000000000000000000000000000001', 18, 't0', 'token0')
 const standardPermitOptions: StandardPermitArguments = {
   v: 0,
   r: '0x0000000000000000000000000000000000000000000000000000000000000001',

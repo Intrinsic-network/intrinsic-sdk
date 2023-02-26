@@ -6,7 +6,7 @@ import { ADDRESS_ZERO } from './constants'
 import { PermitOptions, SelfPermit } from './selfPermit'
 import { encodeRouteToPath } from './utils'
 import { MethodParameters, toHex } from './utils/calldata'
-import ISwapRouter from '@uniswap/v3-periphery/artifacts/contracts/SwapRouter.sol/SwapRouter.json'
+import ISwapRouter from '@intrinsic-network/periphery/artifacts/contracts/SwapRouter.sol/SwapRouter.json'
 import { Multicall } from './multicall'
 import { FeeOptions, Payments } from './payments'
 
@@ -183,7 +183,7 @@ export abstract class SwapRouter {
     if (routerMustCustody) {
       if (!!options.fee) {
         if (outputIsNative) {
-          calldatas.push(Payments.encodeUnwrapWETH9(totalAmountOut.quotient, recipient, options.fee))
+          calldatas.push(Payments.encodeUnwrapWRBTC(totalAmountOut.quotient, recipient, options.fee))
         } else {
           calldatas.push(
             Payments.encodeSweepToken(
@@ -195,13 +195,13 @@ export abstract class SwapRouter {
           )
         }
       } else {
-        calldatas.push(Payments.encodeUnwrapWETH9(totalAmountOut.quotient, recipient))
+        calldatas.push(Payments.encodeUnwrapWRBTC(totalAmountOut.quotient, recipient))
       }
     }
 
     // refund
     if (mustRefund) {
-      calldatas.push(Payments.encodeRefundETH())
+      calldatas.push(Payments.encodeRefundRBTC())
     }
 
     return {

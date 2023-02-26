@@ -1,4 +1,4 @@
-import { Token, CurrencyAmount, WETH9 } from '@uniswap/sdk-core'
+import { Token, CurrencyAmount } from '@uniswap/sdk-core'
 import { FeeAmount, TICK_SPACINGS } from '../constants'
 import { nearestUsableTick } from '../utils/nearestUsableTick'
 import { TickMath } from '../utils/tickMath'
@@ -6,29 +6,30 @@ import { Pool } from './pool'
 import { encodeSqrtRatioX96 } from '../utils/encodeSqrtRatioX96'
 import JSBI from 'jsbi'
 import { NEGATIVE_ONE } from '../internalConstants'
+import { WRBTC, WtRBTC } from '../wrbtc'
 
-const ONE_ETHER = JSBI.exponentiate(JSBI.BigInt(10), JSBI.BigInt(18))
+const ONE_RBTC = JSBI.exponentiate(JSBI.BigInt(10), JSBI.BigInt(18))
 
 describe('Pool', () => {
-  const USDC = new Token(1, '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', 6, 'USDC', 'USD Coin')
-  const DAI = new Token(1, '0x6B175474E89094C44Da98b954EedeAC495271d0F', 18, 'DAI', 'DAI Stablecoin')
+  const USDC = new Token(30, '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', 6, 'USDC', 'USD Coin')
+  const DAI = new Token(30, '0x6B175474E89094C44Da98b954EedeAC495271d0F', 18, 'DAI', 'DAI Stablecoin')
 
   describe('constructor', () => {
     it('cannot be used for tokens on different chains', () => {
       expect(() => {
-        new Pool(USDC, WETH9[3], FeeAmount.MEDIUM, encodeSqrtRatioX96(1, 1), 0, 0, [])
+        new Pool(USDC, WtRBTC, FeeAmount.MEDIUM, encodeSqrtRatioX96(1, 1), 0, 0, [])
       }).toThrow('CHAIN_IDS')
     })
 
     it('fee must be integer', () => {
       expect(() => {
-        new Pool(USDC, WETH9[1], FeeAmount.MEDIUM + 0.5, encodeSqrtRatioX96(1, 1), 0, 0, [])
+        new Pool(USDC, WRBTC, FeeAmount.MEDIUM + 0.5, encodeSqrtRatioX96(1, 1), 0, 0, [])
       }).toThrow('FEE')
     })
 
     it('fee cannot be more than 1e6', () => {
       expect(() => {
-        new Pool(USDC, WETH9[1], 1e6, encodeSqrtRatioX96(1, 1), 0, 0, [])
+        new Pool(USDC, WRBTC, 1e6, encodeSqrtRatioX96(1, 1), 0, 0, [])
       }).toThrow('FEE')
     })
 
@@ -40,34 +41,34 @@ describe('Pool', () => {
 
     it('price must be within tick price bounds', () => {
       expect(() => {
-        new Pool(USDC, WETH9[1], FeeAmount.MEDIUM, encodeSqrtRatioX96(1, 1), 0, 1, [])
+        new Pool(USDC, WRBTC, FeeAmount.MEDIUM, encodeSqrtRatioX96(1, 1), 0, 1, [])
       }).toThrow('PRICE_BOUNDS')
       expect(() => {
-        new Pool(USDC, WETH9[1], FeeAmount.MEDIUM, JSBI.add(encodeSqrtRatioX96(1, 1), JSBI.BigInt(1)), 0, -1, [])
+        new Pool(USDC, WRBTC, FeeAmount.MEDIUM, JSBI.add(encodeSqrtRatioX96(1, 1), JSBI.BigInt(1)), 0, -1, [])
       }).toThrow('PRICE_BOUNDS')
     })
 
     it('works with valid arguments for empty pool medium fee', () => {
-      new Pool(USDC, WETH9[1], FeeAmount.MEDIUM, encodeSqrtRatioX96(1, 1), 0, 0, [])
+      new Pool(USDC, WRBTC, FeeAmount.MEDIUM, encodeSqrtRatioX96(1, 1), 0, 0, [])
     })
 
     it('works with valid arguments for empty pool low fee', () => {
-      new Pool(USDC, WETH9[1], FeeAmount.LOW, encodeSqrtRatioX96(1, 1), 0, 0, [])
+      new Pool(USDC, WRBTC, FeeAmount.LOW, encodeSqrtRatioX96(1, 1), 0, 0, [])
     })
 
     it('works with valid arguments for empty pool lowest fee', () => {
-      new Pool(USDC, WETH9[1], FeeAmount.LOWEST, encodeSqrtRatioX96(1, 1), 0, 0, [])
+      new Pool(USDC, WRBTC, FeeAmount.LOWEST, encodeSqrtRatioX96(1, 1), 0, 0, [])
     })
 
     it('works with valid arguments for empty pool high fee', () => {
-      new Pool(USDC, WETH9[1], FeeAmount.HIGH, encodeSqrtRatioX96(1, 1), 0, 0, [])
+      new Pool(USDC, WRBTC, FeeAmount.HIGH, encodeSqrtRatioX96(1, 1), 0, 0, [])
     })
   })
 
   describe('#getAddress', () => {
     it('matches an example', () => {
       const result = Pool.getAddress(USDC, DAI, FeeAmount.LOW)
-      expect(result).toEqual('0x6c6Bc977E13Df9b0de53b251522280BB72383700')
+      expect(result).toEqual('0xe03000b22378622cD90c19f46297969dDCfD7B90')
     })
   })
 
@@ -150,16 +151,16 @@ describe('Pool', () => {
     })
 
     it('throws if invalid token', () => {
-      expect(() => pool.priceOf(WETH9[1])).toThrow('TOKEN')
+      expect(() => pool.priceOf(WRBTC)).toThrow('TOKEN')
     })
   })
 
   describe('#chainId', () => {
     it('returns the token0 chainId', () => {
       let pool = new Pool(USDC, DAI, FeeAmount.LOW, encodeSqrtRatioX96(1, 1), 0, 0, [])
-      expect(pool.chainId).toEqual(1)
+      expect(pool.chainId).toEqual(30)
       pool = new Pool(DAI, USDC, FeeAmount.LOW, encodeSqrtRatioX96(1, 1), 0, 0, [])
-      expect(pool.chainId).toEqual(1)
+      expect(pool.chainId).toEqual(30)
     })
   })
 
@@ -167,23 +168,23 @@ describe('Pool', () => {
     const pool = new Pool(USDC, DAI, FeeAmount.LOW, encodeSqrtRatioX96(1, 1), 0, 0, [])
     expect(pool.involvesToken(USDC)).toEqual(true)
     expect(pool.involvesToken(DAI)).toEqual(true)
-    expect(pool.involvesToken(WETH9[1])).toEqual(false)
+    expect(pool.involvesToken(WRBTC)).toEqual(false)
   })
 
   describe('swaps', () => {
     let pool: Pool
 
     beforeEach(() => {
-      pool = new Pool(USDC, DAI, FeeAmount.LOW, encodeSqrtRatioX96(1, 1), ONE_ETHER, 0, [
+      pool = new Pool(USDC, DAI, FeeAmount.LOW, encodeSqrtRatioX96(1, 1), ONE_RBTC, 0, [
         {
           index: nearestUsableTick(TickMath.MIN_TICK, TICK_SPACINGS[FeeAmount.LOW]),
-          liquidityNet: ONE_ETHER,
-          liquidityGross: ONE_ETHER
+          liquidityNet: ONE_RBTC,
+          liquidityGross: ONE_RBTC
         },
         {
           index: nearestUsableTick(TickMath.MAX_TICK, TICK_SPACINGS[FeeAmount.LOW]),
-          liquidityNet: JSBI.multiply(ONE_ETHER, NEGATIVE_ONE),
-          liquidityGross: ONE_ETHER
+          liquidityNet: JSBI.multiply(ONE_RBTC, NEGATIVE_ONE),
+          liquidityGross: ONE_RBTC
         }
       ])
     })
@@ -226,16 +227,16 @@ describe('Pool', () => {
     const bigNum1 = JSBI.add(JSBI.BigInt(Number.MAX_SAFE_INTEGER), JSBI.BigInt(1))
     const bigNum2 = JSBI.add(JSBI.BigInt(Number.MAX_SAFE_INTEGER), JSBI.BigInt(1))
     beforeEach(() => {
-      pool = new Pool(USDC, DAI, FeeAmount.LOW, encodeSqrtRatioX96(bigNum1, bigNum2), ONE_ETHER, 0, [
+      pool = new Pool(USDC, DAI, FeeAmount.LOW, encodeSqrtRatioX96(bigNum1, bigNum2), ONE_RBTC, 0, [
         {
           index: nearestUsableTick(TickMath.MIN_TICK, TICK_SPACINGS[FeeAmount.LOW]),
-          liquidityNet: ONE_ETHER,
-          liquidityGross: ONE_ETHER
+          liquidityNet: ONE_RBTC,
+          liquidityGross: ONE_RBTC
         },
         {
           index: nearestUsableTick(TickMath.MAX_TICK, TICK_SPACINGS[FeeAmount.LOW]),
-          liquidityNet: JSBI.multiply(ONE_ETHER, NEGATIVE_ONE),
-          liquidityGross: ONE_ETHER
+          liquidityNet: JSBI.multiply(ONE_RBTC, NEGATIVE_ONE),
+          liquidityGross: ONE_RBTC
         }
       ])
     })

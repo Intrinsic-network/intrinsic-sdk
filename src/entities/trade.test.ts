@@ -1,19 +1,20 @@
-import { CurrencyAmount, Ether, Percent, Price, sqrt, Token, TradeType, WETH9 } from '@uniswap/sdk-core'
+import { CurrencyAmount, Percent, Price, sqrt, Token, TradeType } from '@uniswap/sdk-core'
 import JSBI from 'jsbi'
 import { FeeAmount, TICK_SPACINGS } from '../constants'
 import { encodeSqrtRatioX96 } from '../utils/encodeSqrtRatioX96'
 import { nearestUsableTick } from '../utils/nearestUsableTick'
 import { TickMath } from '../utils/tickMath'
+import { RSK, WRBTC } from '../wrbtc'
 import { Pool } from './pool'
 import { Route } from './route'
 import { Trade } from './trade'
 
 describe('Trade', () => {
-  const ETHER = Ether.onChain(1)
-  const token0 = new Token(1, '0x0000000000000000000000000000000000000001', 18, 't0', 'token0')
-  const token1 = new Token(1, '0x0000000000000000000000000000000000000002', 18, 't1', 'token1')
-  const token2 = new Token(1, '0x0000000000000000000000000000000000000003', 18, 't2', 'token2')
-  const token3 = new Token(1, '0x0000000000000000000000000000000000000004', 18, 't3', 'token3')
+  const RBTC = RSK.onChain(30)
+  const token0 = new Token(30, '0x0000000000000000000000000000000000000001', 18, 't0', 'token0')
+  const token1 = new Token(30, '0x0000000000000000000000000000000000000002', 18, 't1', 'token1')
+  const token2 = new Token(30, '0x0000000000000000000000000000000000000003', 18, 't2', 'token2')
+  const token3 = new Token(30, '0x0000000000000000000000000000000000000004', 18, 't3', 'token3')
 
   function v2StylePool(
     reserve0: CurrencyAmount<Token>,
@@ -65,140 +66,140 @@ describe('Trade', () => {
     CurrencyAmount.fromRawAmount(token3, 130000)
   )
 
-  const pool_weth_0 = v2StylePool(
-    CurrencyAmount.fromRawAmount(WETH9[1], JSBI.BigInt(100000)),
+  const pool_wrbtc_0 = v2StylePool(
+    CurrencyAmount.fromRawAmount(WRBTC, JSBI.BigInt(100000)),
     CurrencyAmount.fromRawAmount(token0, JSBI.BigInt(100000))
   )
 
-  const pool_weth_1 = v2StylePool(
-    CurrencyAmount.fromRawAmount(WETH9[1], JSBI.BigInt(100000)),
+  const pool_wrbtc_1 = v2StylePool(
+    CurrencyAmount.fromRawAmount(WRBTC, JSBI.BigInt(100000)),
     CurrencyAmount.fromRawAmount(token1, JSBI.BigInt(100000))
   )
 
-  const pool_weth_2 = v2StylePool(
-    CurrencyAmount.fromRawAmount(WETH9[1], JSBI.BigInt(100000)),
+  const pool_wrbtc_2 = v2StylePool(
+    CurrencyAmount.fromRawAmount(WRBTC, JSBI.BigInt(100000)),
     CurrencyAmount.fromRawAmount(token2, JSBI.BigInt(100000))
   )
 
   describe('#fromRoute', () => {
-    it('can be constructed with ETHER as input', async () => {
+    it('can be constructed with RBTC as input', async () => {
       const trade = await Trade.fromRoute(
-        new Route([pool_weth_0], ETHER, token0),
-        CurrencyAmount.fromRawAmount(Ether.onChain(1), JSBI.BigInt(10000)),
+        new Route([pool_wrbtc_0], RBTC, token0),
+        CurrencyAmount.fromRawAmount(RSK.onChain(30), JSBI.BigInt(10000)),
         TradeType.EXACT_INPUT
       )
-      expect(trade.inputAmount.currency).toEqual(ETHER)
+      expect(trade.inputAmount.currency).toEqual(RBTC)
       expect(trade.outputAmount.currency).toEqual(token0)
     })
-    it('can be constructed with ETHER as input for exact output', async () => {
+    it('can be constructed with RBTC as input for exact output', async () => {
       const trade = await Trade.fromRoute(
-        new Route([pool_weth_0], ETHER, token0),
+        new Route([pool_wrbtc_0], RBTC, token0),
         CurrencyAmount.fromRawAmount(token0, JSBI.BigInt(10000)),
         TradeType.EXACT_OUTPUT
       )
-      expect(trade.inputAmount.currency).toEqual(ETHER)
+      expect(trade.inputAmount.currency).toEqual(RBTC)
       expect(trade.outputAmount.currency).toEqual(token0)
     })
 
-    it('can be constructed with ETHER as output', async () => {
+    it('can be constructed with RBTC as output', async () => {
       const trade = await Trade.fromRoute(
-        new Route([pool_weth_0], token0, ETHER),
-        CurrencyAmount.fromRawAmount(Ether.onChain(1), JSBI.BigInt(10000)),
+        new Route([pool_wrbtc_0], token0, RBTC),
+        CurrencyAmount.fromRawAmount(RSK.onChain(30), JSBI.BigInt(10000)),
         TradeType.EXACT_OUTPUT
       )
       expect(trade.inputAmount.currency).toEqual(token0)
-      expect(trade.outputAmount.currency).toEqual(ETHER)
+      expect(trade.outputAmount.currency).toEqual(RBTC)
     })
-    it('can be constructed with ETHER as output for exact input', async () => {
+    it('can be constructed with RBTC as output for exact input', async () => {
       const trade = await Trade.fromRoute(
-        new Route([pool_weth_0], token0, ETHER),
+        new Route([pool_wrbtc_0], token0, RBTC),
         CurrencyAmount.fromRawAmount(token0, JSBI.BigInt(10000)),
         TradeType.EXACT_INPUT
       )
       expect(trade.inputAmount.currency).toEqual(token0)
-      expect(trade.outputAmount.currency).toEqual(ETHER)
+      expect(trade.outputAmount.currency).toEqual(RBTC)
     })
   })
 
   describe('#fromRoutes', () => {
-    it('can be constructed with ETHER as input with multiple routes', async () => {
-      const trade = await Trade.fromRoutes<Ether, Token, TradeType.EXACT_INPUT>(
+    it('can be constructed with RBTC as input with multiple routes', async () => {
+      const trade = await Trade.fromRoutes<RSK, Token, TradeType.EXACT_INPUT>(
         [
           {
-            amount: CurrencyAmount.fromRawAmount(Ether.onChain(1), JSBI.BigInt(10000)),
-            route: new Route([pool_weth_0], ETHER, token0)
+            amount: CurrencyAmount.fromRawAmount(RSK.onChain(30), JSBI.BigInt(10000)),
+            route: new Route([pool_wrbtc_0], RBTC, token0)
           }
         ],
         TradeType.EXACT_INPUT
       )
-      expect(trade.inputAmount.currency).toEqual(ETHER)
+      expect(trade.inputAmount.currency).toEqual(RBTC)
       expect(trade.outputAmount.currency).toEqual(token0)
     })
 
-    it('can be constructed with ETHER as input for exact output with multiple routes', async () => {
-      const trade = await Trade.fromRoutes<Ether, Token, TradeType.EXACT_OUTPUT>(
+    it('can be constructed with RBTC as input for exact output with multiple routes', async () => {
+      const trade = await Trade.fromRoutes<RSK, Token, TradeType.EXACT_OUTPUT>(
         [
           {
             amount: CurrencyAmount.fromRawAmount(token0, JSBI.BigInt(3000)),
-            route: new Route([pool_weth_0], ETHER, token0)
+            route: new Route([pool_wrbtc_0], RBTC, token0)
           },
           {
             amount: CurrencyAmount.fromRawAmount(token0, JSBI.BigInt(7000)),
-            route: new Route([pool_weth_1, pool_0_1], ETHER, token0)
+            route: new Route([pool_wrbtc_1, pool_0_1], RBTC, token0)
           }
         ],
         TradeType.EXACT_OUTPUT
       )
-      expect(trade.inputAmount.currency).toEqual(ETHER)
+      expect(trade.inputAmount.currency).toEqual(RBTC)
       expect(trade.outputAmount.currency).toEqual(token0)
     })
 
-    it('can be constructed with ETHER as output with multiple routes', async () => {
-      const trade = await Trade.fromRoutes<Token, Ether, TradeType.EXACT_OUTPUT>(
+    it('can be constructed with RBTC as output with multiple routes', async () => {
+      const trade = await Trade.fromRoutes<Token, RSK, TradeType.EXACT_OUTPUT>(
         [
           {
-            amount: CurrencyAmount.fromRawAmount(Ether.onChain(1), JSBI.BigInt(4000)),
-            route: new Route([pool_weth_0], token0, ETHER)
+            amount: CurrencyAmount.fromRawAmount(RSK.onChain(30), JSBI.BigInt(4000)),
+            route: new Route([pool_wrbtc_0], token0, RBTC)
           },
           {
-            amount: CurrencyAmount.fromRawAmount(Ether.onChain(1), JSBI.BigInt(6000)),
-            route: new Route([pool_0_1, pool_weth_1], token0, ETHER)
+            amount: CurrencyAmount.fromRawAmount(RSK.onChain(30), JSBI.BigInt(6000)),
+            route: new Route([pool_0_1, pool_wrbtc_1], token0, RBTC)
           }
         ],
         TradeType.EXACT_OUTPUT
       )
       expect(trade.inputAmount.currency).toEqual(token0)
-      expect(trade.outputAmount.currency).toEqual(ETHER)
+      expect(trade.outputAmount.currency).toEqual(RBTC)
     })
-    it('can be constructed with ETHER as output for exact input with multiple routes', async () => {
-      const trade = await Trade.fromRoutes<Token, Ether, TradeType.EXACT_INPUT>(
+    it('can be constructed with RBTC as output for exact input with multiple routes', async () => {
+      const trade = await Trade.fromRoutes<Token, RSK, TradeType.EXACT_INPUT>(
         [
           {
             amount: CurrencyAmount.fromRawAmount(token0, JSBI.BigInt(3000)),
-            route: new Route([pool_weth_0], token0, ETHER)
+            route: new Route([pool_wrbtc_0], token0, RBTC)
           },
           {
             amount: CurrencyAmount.fromRawAmount(token0, JSBI.BigInt(7000)),
-            route: new Route([pool_0_1, pool_weth_1], token0, ETHER)
+            route: new Route([pool_0_1, pool_wrbtc_1], token0, RBTC)
           }
         ],
         TradeType.EXACT_INPUT
       )
       expect(trade.inputAmount.currency).toEqual(token0)
-      expect(trade.outputAmount.currency).toEqual(ETHER)
+      expect(trade.outputAmount.currency).toEqual(RBTC)
     })
 
     it('throws if pools are re-used between routes', async () => {
       await expect(
-        Trade.fromRoutes<Token, Ether, TradeType.EXACT_INPUT>(
+        Trade.fromRoutes<Token, RSK, TradeType.EXACT_INPUT>(
           [
             {
               amount: CurrencyAmount.fromRawAmount(token0, JSBI.BigInt(4500)),
-              route: new Route([pool_0_1, pool_weth_1], token0, ETHER)
+              route: new Route([pool_0_1, pool_wrbtc_1], token0, RBTC)
             },
             {
               amount: CurrencyAmount.fromRawAmount(token0, JSBI.BigInt(5500)),
-              route: new Route([pool_0_1, pool_1_2, pool_weth_2], token0, ETHER)
+              route: new Route([pool_0_1, pool_1_2, pool_wrbtc_2], token0, RBTC)
             }
           ],
           TradeType.EXACT_INPUT
@@ -611,34 +612,34 @@ describe('Trade', () => {
       expect(result).toHaveLength(0)
     })
 
-    it('works for ETHER currency input', async () => {
+    it('works for RBTC currency input', async () => {
       const result = await Trade.bestTradeExactIn(
-        [pool_weth_0, pool_0_1, pool_0_3, pool_1_3],
-        CurrencyAmount.fromRawAmount(Ether.onChain(1), JSBI.BigInt(100)),
+        [pool_wrbtc_0, pool_0_1, pool_0_3, pool_1_3],
+        CurrencyAmount.fromRawAmount(RSK.onChain(30), JSBI.BigInt(100)),
         token3
       )
       expect(result).toHaveLength(2)
-      expect(result[0].inputAmount.currency).toEqual(ETHER)
-      expect(result[0].swaps[0].route.tokenPath).toEqual([WETH9[1], token0, token1, token3])
+      expect(result[0].inputAmount.currency).toEqual(RBTC)
+      expect(result[0].swaps[0].route.tokenPath).toEqual([WRBTC, token0, token1, token3])
       expect(result[0].outputAmount.currency).toEqual(token3)
-      expect(result[1].inputAmount.currency).toEqual(ETHER)
-      expect(result[1].swaps[0].route.tokenPath).toEqual([WETH9[1], token0, token3])
+      expect(result[1].inputAmount.currency).toEqual(RBTC)
+      expect(result[1].swaps[0].route.tokenPath).toEqual([WRBTC, token0, token3])
       expect(result[1].outputAmount.currency).toEqual(token3)
     })
 
-    it('works for ETHER currency output', async () => {
+    it('works for RBTC currency output', async () => {
       const result = await Trade.bestTradeExactIn(
-        [pool_weth_0, pool_0_1, pool_0_3, pool_1_3],
+        [pool_wrbtc_0, pool_0_1, pool_0_3, pool_1_3],
         CurrencyAmount.fromRawAmount(token3, JSBI.BigInt(100)),
-        ETHER
+        RBTC
       )
       expect(result).toHaveLength(2)
       expect(result[0].inputAmount.currency).toEqual(token3)
-      expect(result[0].swaps[0].route.tokenPath).toEqual([token3, token0, WETH9[1]])
-      expect(result[0].outputAmount.currency).toEqual(ETHER)
+      expect(result[0].swaps[0].route.tokenPath).toEqual([token3, token0, WRBTC])
+      expect(result[0].outputAmount.currency).toEqual(RBTC)
       expect(result[1].inputAmount.currency).toEqual(token3)
-      expect(result[1].swaps[0].route.tokenPath).toEqual([token3, token1, token0, WETH9[1]])
-      expect(result[1].outputAmount.currency).toEqual(ETHER)
+      expect(result[1].swaps[0].route.tokenPath).toEqual([token3, token1, token0, WRBTC])
+      expect(result[1].outputAmount.currency).toEqual(RBTC)
     })
   })
 
@@ -868,33 +869,33 @@ describe('Trade', () => {
       expect(result).toHaveLength(0)
     })
 
-    it('works for ETHER currency input', async () => {
+    it('works for RBTC currency input', async () => {
       const result = await Trade.bestTradeExactOut(
-        [pool_weth_0, pool_0_1, pool_0_3, pool_1_3],
-        ETHER,
+        [pool_wrbtc_0, pool_0_1, pool_0_3, pool_1_3],
+        RBTC,
         CurrencyAmount.fromRawAmount(token3, 10000)
       )
       expect(result).toHaveLength(2)
-      expect(result[0].inputAmount.currency).toEqual(ETHER)
-      expect(result[0].swaps[0].route.tokenPath).toEqual([WETH9[1], token0, token1, token3])
+      expect(result[0].inputAmount.currency).toEqual(RBTC)
+      expect(result[0].swaps[0].route.tokenPath).toEqual([WRBTC, token0, token1, token3])
       expect(result[0].outputAmount.currency).toEqual(token3)
-      expect(result[1].inputAmount.currency).toEqual(ETHER)
-      expect(result[1].swaps[0].route.tokenPath).toEqual([WETH9[1], token0, token3])
+      expect(result[1].inputAmount.currency).toEqual(RBTC)
+      expect(result[1].swaps[0].route.tokenPath).toEqual([WRBTC, token0, token3])
       expect(result[1].outputAmount.currency).toEqual(token3)
     })
-    it('works for ETHER currency output', async () => {
+    it('works for RBTC currency output', async () => {
       const result = await Trade.bestTradeExactOut(
-        [pool_weth_0, pool_0_1, pool_0_3, pool_1_3],
+        [pool_wrbtc_0, pool_0_1, pool_0_3, pool_1_3],
         token3,
-        CurrencyAmount.fromRawAmount(Ether.onChain(1), JSBI.BigInt(100))
+        CurrencyAmount.fromRawAmount(RSK.onChain(30), JSBI.BigInt(100))
       )
       expect(result).toHaveLength(2)
       expect(result[0].inputAmount.currency).toEqual(token3)
-      expect(result[0].swaps[0].route.tokenPath).toEqual([token3, token0, WETH9[1]])
-      expect(result[0].outputAmount.currency).toEqual(ETHER)
+      expect(result[0].swaps[0].route.tokenPath).toEqual([token3, token0, WRBTC])
+      expect(result[0].outputAmount.currency).toEqual(RBTC)
       expect(result[1].inputAmount.currency).toEqual(token3)
-      expect(result[1].swaps[0].route.tokenPath).toEqual([token3, token1, token0, WETH9[1]])
-      expect(result[1].outputAmount.currency).toEqual(ETHER)
+      expect(result[1].swaps[0].route.tokenPath).toEqual([token3, token1, token0, WRBTC])
+      expect(result[1].outputAmount.currency).toEqual(RBTC)
     })
   })
 })

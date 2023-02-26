@@ -1,20 +1,21 @@
-import { Ether, Token, WETH9 } from '@uniswap/sdk-core'
+import { Token } from '@uniswap/sdk-core'
 import { FeeAmount } from '../constants'
 import { encodeSqrtRatioX96 } from '../utils/encodeSqrtRatioX96'
 import { TickMath } from '../utils/tickMath'
+import { RSK, WRBTC } from '../wrbtc'
 import { Pool } from './pool'
 import { Route } from './route'
 
 describe('Route', () => {
-  const ETHER = Ether.onChain(1)
-  const token0 = new Token(1, '0x0000000000000000000000000000000000000001', 18, 't0')
-  const token1 = new Token(1, '0x0000000000000000000000000000000000000002', 18, 't1')
-  const token2 = new Token(1, '0x0000000000000000000000000000000000000003', 18, 't2')
-  const weth = WETH9[1]
+  const RBTC = RSK.onChain(30)
+  const token0 = new Token(30, '0x0000000000000000000000000000000000000001', 18, 't0')
+  const token1 = new Token(30, '0x0000000000000000000000000000000000000002', 18, 't1')
+  const token2 = new Token(30, '0x0000000000000000000000000000000000000003', 18, 't2')
+  const wrbtc = WRBTC
 
   const pool_0_1 = new Pool(token0, token1, FeeAmount.MEDIUM, encodeSqrtRatioX96(1, 1), 0, 0, [])
-  const pool_0_weth = new Pool(token0, weth, FeeAmount.MEDIUM, encodeSqrtRatioX96(1, 1), 0, 0, [])
-  const pool_1_weth = new Pool(token1, weth, FeeAmount.MEDIUM, encodeSqrtRatioX96(1, 1), 0, 0, [])
+  const pool_0_wrbtc = new Pool(token0, wrbtc, FeeAmount.MEDIUM, encodeSqrtRatioX96(1, 1), 0, 0, [])
+  const pool_1_wrbtc = new Pool(token1, wrbtc, FeeAmount.MEDIUM, encodeSqrtRatioX96(1, 1), 0, 0, [])
 
   describe('path', () => {
     it('constructs a path from the tokens', () => {
@@ -23,35 +24,35 @@ describe('Route', () => {
       expect(route.tokenPath).toEqual([token0, token1])
       expect(route.input).toEqual(token0)
       expect(route.output).toEqual(token1)
-      expect(route.chainId).toEqual(1)
+      expect(route.chainId).toEqual(30)
     })
     it('should fail if the input is not in the first pool', () => {
-      expect(() => new Route([pool_0_1], weth, token1)).toThrow()
+      expect(() => new Route([pool_0_1], wrbtc, token1)).toThrow()
     })
     it('should fail if output is not in the last pool', () => {
-      expect(() => new Route([pool_0_1], token0, weth)).toThrow()
+      expect(() => new Route([pool_0_1], token0, wrbtc)).toThrow()
     })
   })
 
   it('can have a token as both input and output', () => {
-    const route = new Route([pool_0_weth, pool_0_1, pool_1_weth], weth, weth)
-    expect(route.pools).toEqual([pool_0_weth, pool_0_1, pool_1_weth])
-    expect(route.input).toEqual(weth)
-    expect(route.output).toEqual(weth)
+    const route = new Route([pool_0_wrbtc, pool_0_1, pool_1_wrbtc], wrbtc, wrbtc)
+    expect(route.pools).toEqual([pool_0_wrbtc, pool_0_1, pool_1_wrbtc])
+    expect(route.input).toEqual(wrbtc)
+    expect(route.output).toEqual(wrbtc)
   })
 
   it('supports ether input', () => {
-    const route = new Route([pool_0_weth], ETHER, token0)
-    expect(route.pools).toEqual([pool_0_weth])
-    expect(route.input).toEqual(ETHER)
+    const route = new Route([pool_0_wrbtc], RBTC, token0)
+    expect(route.pools).toEqual([pool_0_wrbtc])
+    expect(route.input).toEqual(RBTC)
     expect(route.output).toEqual(token0)
   })
 
   it('supports ether output', () => {
-    const route = new Route([pool_0_weth], token0, ETHER)
-    expect(route.pools).toEqual([pool_0_weth])
+    const route = new Route([pool_0_wrbtc], token0, RBTC)
+    expect(route.pools).toEqual([pool_0_wrbtc])
     expect(route.input).toEqual(token0)
-    expect(route.output).toEqual(ETHER)
+    expect(route.output).toEqual(RBTC)
   })
 
   describe('#midPrice', () => {
@@ -73,18 +74,18 @@ describe('Route', () => {
       TickMath.getTickAtSqrtRatio(encodeSqrtRatioX96(15, 30)),
       []
     )
-    const pool_0_weth = new Pool(
+    const pool_0_wrbtc = new Pool(
       token0,
-      weth,
+      wrbtc,
       FeeAmount.MEDIUM,
       encodeSqrtRatioX96(3, 1),
       0,
       TickMath.getTickAtSqrtRatio(encodeSqrtRatioX96(3, 1)),
       []
     )
-    const pool_1_weth = new Pool(
+    const pool_1_wrbtc = new Pool(
       token1,
-      weth,
+      wrbtc,
       FeeAmount.MEDIUM,
       encodeSqrtRatioX96(1, 7),
       0,
@@ -126,31 +127,31 @@ describe('Route', () => {
     })
 
     it('correct for ether -> 0', () => {
-      const price = new Route([pool_0_weth], ETHER, token0).midPrice
+      const price = new Route([pool_0_wrbtc], RBTC, token0).midPrice
       expect(price.toFixed(4)).toEqual('0.3333')
-      expect(price.baseCurrency.equals(ETHER)).toEqual(true)
+      expect(price.baseCurrency.equals(RBTC)).toEqual(true)
       expect(price.quoteCurrency.equals(token0)).toEqual(true)
     })
 
-    it('correct for 1 -> weth', () => {
-      const price = new Route([pool_1_weth], token1, weth).midPrice
+    it('correct for 1 -> wrbtc', () => {
+      const price = new Route([pool_1_wrbtc], token1, wrbtc).midPrice
       expect(price.toFixed(4)).toEqual('0.1429')
       expect(price.baseCurrency.equals(token1)).toEqual(true)
-      expect(price.quoteCurrency.equals(weth)).toEqual(true)
+      expect(price.quoteCurrency.equals(wrbtc)).toEqual(true)
     })
 
-    it('correct for ether -> 0 -> 1 -> weth', () => {
-      const price = new Route([pool_0_weth, pool_0_1, pool_1_weth], ETHER, weth).midPrice
+    it('correct for ether -> 0 -> 1 -> wrbtc', () => {
+      const price = new Route([pool_0_wrbtc, pool_0_1, pool_1_wrbtc], RBTC, wrbtc).midPrice
       expect(price.toSignificant(4)).toEqual('0.009524')
-      expect(price.baseCurrency.equals(ETHER)).toEqual(true)
-      expect(price.quoteCurrency.equals(weth)).toEqual(true)
+      expect(price.baseCurrency.equals(RBTC)).toEqual(true)
+      expect(price.quoteCurrency.equals(wrbtc)).toEqual(true)
     })
 
-    it('correct for weth -> 0 -> 1 -> ether', () => {
-      const price = new Route([pool_0_weth, pool_0_1, pool_1_weth], weth, ETHER).midPrice
+    it('correct for wrbtc -> 0 -> 1 -> ether', () => {
+      const price = new Route([pool_0_wrbtc, pool_0_1, pool_1_wrbtc], wrbtc, RBTC).midPrice
       expect(price.toSignificant(4)).toEqual('0.009524')
-      expect(price.baseCurrency.equals(weth)).toEqual(true)
-      expect(price.quoteCurrency.equals(ETHER)).toEqual(true)
+      expect(price.baseCurrency.equals(wrbtc)).toEqual(true)
+      expect(price.quoteCurrency.equals(RBTC)).toEqual(true)
     })
   })
 })

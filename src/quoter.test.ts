@@ -1,18 +1,18 @@
 import JSBI from 'jsbi'
-import { CurrencyAmount, Token, TradeType, WETH9 } from '@uniswap/sdk-core'
+import { CurrencyAmount, Token, TradeType } from '@uniswap/sdk-core'
 import { FeeAmount, TICK_SPACINGS } from './constants'
 import { SwapQuoter } from './quoter'
 import { nearestUsableTick, encodeSqrtRatioX96, TickMath } from './utils'
 import { Route, Trade, Pool } from './entities'
+import { WRBTC } from './wrbtc'
 
 describe('SwapQuoter', () => {
-  const token0 = new Token(1, '0x0000000000000000000000000000000000000001', 18, 't0', 'token0')
-  const token1 = new Token(1, '0x0000000000000000000000000000000000000002', 18, 't1', 'token1')
+  const token0 = new Token(30, '0x0000000000000000000000000000000000000001', 18, 't0', 'token0')
+  const token1 = new Token(30, '0x0000000000000000000000000000000000000002', 18, 't1', 'token1')
 
   const feeAmount = FeeAmount.MEDIUM
   const sqrtRatioX96 = encodeSqrtRatioX96(1, 1)
   const liquidity = 1_000_000
-  const WETH = WETH9[1]
 
   const makePool = (token0: Token, token1: Token) => {
     return new Pool(token0, token1, feeAmount, sqrtRatioX96, liquidity, TickMath.getTickAtSqrtRatio(sqrtRatioX96), [
@@ -30,7 +30,7 @@ describe('SwapQuoter', () => {
   }
 
   const pool_0_1 = makePool(token0, token1)
-  const pool_1_weth = makePool(token1, WETH)
+  const pool_1_wrbtc = makePool(token1, WRBTC)
 
   describe('#swapCallParameters', () => {
     describe('single trade input', () => {
@@ -72,7 +72,7 @@ describe('SwapQuoter', () => {
 
       it('multi-hop exact input', async () => {
         const trade = await Trade.fromRoute(
-          new Route([pool_0_1, pool_1_weth], token0, WETH),
+          new Route([pool_0_1, pool_1_wrbtc], token0, WRBTC),
           CurrencyAmount.fromRawAmount(token0, 100),
           TradeType.EXACT_INPUT
         )
@@ -86,8 +86,8 @@ describe('SwapQuoter', () => {
 
       it('multi-hop exact output', async () => {
         const trade = await Trade.fromRoute(
-          new Route([pool_0_1, pool_1_weth], token0, WETH),
-          CurrencyAmount.fromRawAmount(WETH, 100),
+          new Route([pool_0_1, pool_1_wrbtc], token0, WRBTC),
+          CurrencyAmount.fromRawAmount(WRBTC, 100),
           TradeType.EXACT_OUTPUT
         )
         const { calldata, value } = SwapQuoter.quoteCallParameters(trade.route, trade.outputAmount, trade.tradeType)

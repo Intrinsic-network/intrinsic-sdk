@@ -13,7 +13,7 @@ import { Position } from './entities/position'
 import { ONE, ZERO } from './internalConstants'
 import { MethodParameters, toHex } from './utils/calldata'
 import { Interface } from '@ethersproject/abi'
-import INonfungiblePositionManager from '@uniswap/v3-periphery/artifacts/contracts/NonfungiblePositionManager.sol/NonfungiblePositionManager.json'
+import INonfungiblePositionManager from '@intrinsic-network/periphery/artifacts/contracts/NonfungiblePositionManager.sol/NonfungiblePositionManager.json'
 import { PermitOptions, SelfPermit } from './selfPermit'
 import { ADDRESS_ZERO } from './constants'
 import { Pool } from './entities'
@@ -56,7 +56,7 @@ export interface CommonAddLiquidityOptions {
   deadline: BigintIsh
 
   /**
-   * Whether to spend ether. If true, one of the pool tokens must be WETH, by default false
+   * Whether to spend ether. If true, one of the pool tokens must be WRBTC, by default false
    */
   useNative?: NativeCurrency
 
@@ -265,13 +265,13 @@ export abstract class NonfungiblePositionManager {
 
     if (options.useNative) {
       const wrapped = options.useNative.wrapped
-      invariant(position.pool.token0.equals(wrapped) || position.pool.token1.equals(wrapped), 'NO_WETH')
+      invariant(position.pool.token0.equals(wrapped) || position.pool.token1.equals(wrapped), 'NO_WRBTC')
 
       const wrappedValue = position.pool.token0.equals(wrapped) ? amount0Desired : amount1Desired
 
-      // we only need to refund if we're actually sending ETH
+      // we only need to refund if we're actually sending RBTC
       if (JSBI.greaterThan(wrappedValue, ZERO)) {
-        calldatas.push(Payments.encodeRefundETH())
+        calldatas.push(Payments.encodeRefundRBTC())
       }
 
       value = toHex(wrappedValue)
@@ -288,7 +288,7 @@ export abstract class NonfungiblePositionManager {
 
     const tokenId = toHex(options.tokenId)
 
-    const involvesETH =
+    const involvesRBTC =
       options.expectedCurrencyOwed0.currency.isNative || options.expectedCurrencyOwed1.currency.isNative
 
     const recipient = validateAndParseAddress(options.recipient)
@@ -298,14 +298,14 @@ export abstract class NonfungiblePositionManager {
       NonfungiblePositionManager.INTERFACE.encodeFunctionData('collect', [
         {
           tokenId,
-          recipient: involvesETH ? ADDRESS_ZERO : recipient,
+          recipient: involvesRBTC ? ADDRESS_ZERO : recipient,
           amount0Max: MaxUint128,
           amount1Max: MaxUint128
         }
       ])
     )
 
-    if (involvesETH) {
+    if (involvesRBTC) {
       const ethAmount = options.expectedCurrencyOwed0.currency.isNative
         ? options.expectedCurrencyOwed0.quotient
         : options.expectedCurrencyOwed1.quotient
@@ -316,7 +316,7 @@ export abstract class NonfungiblePositionManager {
         ? options.expectedCurrencyOwed1.quotient
         : options.expectedCurrencyOwed0.quotient
 
-      calldatas.push(Payments.encodeUnwrapWETH9(ethAmount, recipient))
+      calldatas.push(Payments.encodeUnwrapWRBTC(ethAmount, recipient))
       calldatas.push(Payments.encodeSweepToken(token, tokenAmount, recipient))
     }
 

@@ -1,11 +1,11 @@
 import { POOL_INIT_CODE_HASH } from './constants'
 
-import IUniswapV3Pool from '@uniswap/v3-core/artifacts/contracts/UniswapV3Pool.sol/UniswapV3Pool.json'
+import IIntrinsicPool from '@intrinsic-network/core/artifacts/contracts/IntrinsicPool.sol/IntrinsicPool.json'
 import { keccak256 } from '@ethersproject/solidity'
 
 // this _could_ go in constants, except that it would cost every consumer of the sdk the CPU to compute the hash
 // and load the JSON.
-const COMPUTED_INIT_CODE_HASH = keccak256(['bytes'], [IUniswapV3Pool.bytecode])
+const COMPUTED_INIT_CODE_HASH = keccak256(['bytes'], [IIntrinsicPool.bytecode])
 
 describe('constants', () => {
   describe('INIT_CODE_HASH', () => {
